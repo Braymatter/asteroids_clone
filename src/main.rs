@@ -1,4 +1,7 @@
-use std::{f32::consts::PI, time::{Duration, Instant}};
+use std::{
+    f32::consts::PI,
+    time::{Duration, Instant},
+};
 
 use bevy::{prelude::*, time::Stopwatch};
 use rand::Rng;
