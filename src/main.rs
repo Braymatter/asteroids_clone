@@ -117,11 +117,11 @@ pub fn control_ship(
     let (ship, mut ship_vel, ship_tsf) = ship.into_inner();
 
     let forward_key = KeyCode::KeyW;
-    let mut rotate_right = KeyCode::KeyD;
+    let rotate_right = KeyCode::KeyD;
     let rotate_left = KeyCode::KeyA;
     #[cfg(feature = "mac-dev")]
     {
-        rotate_right = KeyCode::KeyS;
+        let rotate_right = KeyCode::KeyS;
     }
     let euler_rot = ship_tsf.rotation.to_euler(EulerRot::XYZ).2;
     if btn_input.pressed(forward_key) {
