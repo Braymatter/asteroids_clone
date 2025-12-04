@@ -114,8 +114,8 @@ pub fn game_tick(
         if val < game_stats.roid_chance {
             //Generate random position and velocity
             let pos = Vec2::new(
-                rand.random_range(-550.0..55.0),
-                rand.random_range(-550.0..55.0),
+                rand.random_range(-55.0..55.0),
+                rand.random_range(-55.0..55.0),
             );
             let rotation = rand.random_range(-PI..PI);
             let speed = rand.random_range(-200.0..200.0);
