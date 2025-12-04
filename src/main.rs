@@ -1,4 +1,7 @@
-use std::{f32::consts::PI, time::{Duration, Instant}};
+use std::{
+    f32::consts::PI,
+    time::{Duration, Instant},
+};
 
 use bevy::{prelude::*, time::Stopwatch};
 use rand::Rng;
@@ -19,7 +22,7 @@ fn main() {
 
     app.add_systems(Startup, (load_assets, setup_scene).chain());
 
-    app.add_systems(Update, (game_tick, control_ship, handle_collisions));
+    app.add_systems(Update, (game_tick, control_ship, handle_collisions, texter));
 
     app.run();
 }
@@ -80,6 +83,20 @@ pub fn setup_scene(mut cmds: Commands, assets: Res<GameAssets>) {
         Sprite::from_image(assets.ship.clone()),
         CircleCollider { radius: 50.0 },
     ));
+
+    // Spawns the text 
+    // Taken from Bevy examples
+    // What I learned from this: Nodes are the base UI components. 
+    cmds.spawn((
+        Text::default(),
+        Node {
+            position_type: PositionType::Absolute,
+            top: px(12),
+            left: px(12),
+            ..default()
+        },
+        GameCleanup
+    ));
 }
 
 pub fn game_tick(time: Res<Time>, mut cmds: Commands, mut game_stats: ResMut<GameStats>) {
@@ -114,11 +131,11 @@ pub fn control_ship(
     let (ship, mut ship_vel, ship_tsf) = ship.into_inner();
 
     let forward_key = KeyCode::KeyW;
-    let mut rotate_right = KeyCode::KeyD;
+    let rotate_right = KeyCode::KeyD;
     let rotate_left = KeyCode::KeyA;
     #[cfg(feature = "mac-dev")]
     {
-        rotate_right = KeyCode::KeyS;
+        let rotate_right = KeyCode::KeyS;
     }
     let euler_rot = ship_tsf.rotation.to_euler(EulerRot::XYZ).2;
     if btn_input.pressed(forward_key) {
@@ -159,7 +176,7 @@ impl Default for PlayerShip {
         Self {
             fire_rate: 0.5,
             last_fired: Instant::now(),
-            linear_accel: 50.0,
+            linear_accel: 100.0,
             angular_accel: 2.0 * PI,
         }
     }
@@ -226,7 +243,6 @@ pub fn spawn_laser_shot(
     mut cmds: Commands,
     game_assets: Res<GameAssets>,
 ) {
-    info!("Shooting");
 
     //Set pos and rot
     let mut tsf = Transform::from_xyz(loc.x, loc.y, 0.0);
@@ -285,4 +301,13 @@ pub fn spawn_asteroid(
         CircleCollider { radius: 50.0 },
         tsf,
     ));
+}
+
+// Displays Score while in game
+// Should get moved to game_tick, but I'm leaving it seperate for now
+pub fn texter (
+    mut text: Single<&mut Text>,
+    game_stats: Res<GameStats>
+) {
+    text.0 = format!("Score: {}", game_stats.score);
 }
