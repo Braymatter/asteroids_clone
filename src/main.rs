@@ -32,7 +32,7 @@ pub struct GameStats {
     pub score: u32,
     pub stopwatch: Stopwatch,
     pub roid_timer: Timer,
-    pub roid_chance: i8,
+    pub roid_chance: i32,
 }
 
 impl Default for GameStats {
@@ -111,7 +111,9 @@ pub fn game_tick(
     if game_stats.roid_timer.just_finished() {
         let val = rand.random_range(0..100);
 
-        if val < game_stats.roid_chance {
+        let hard_chance = game_stats.roid_chance * ((game_stats.stopwatch.elapsed_secs()/10.0) as i32).max(1);
+
+        if val <= hard_chance {
             //Generate random position and velocity
             let pos = Vec2::new(
                 rand.random_range(-55.0..55.0),
@@ -221,7 +223,6 @@ pub fn handle_collisions(
 
         if destroyed_roid {
             game_stats.score += 10;
-            info!("Score: {}", game_stats.score);
             continue;
         }
 
