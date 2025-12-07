@@ -22,7 +22,7 @@ fn main() {
 
     app.add_systems(Startup, (load_assets, setup_scene).chain());
 
-    app.add_systems(Update, (game_tick, control_ship, handle_collisions, texter));
+    app.add_systems(Update, (game_tick, control_ship, handle_collisions));
 
     app.run();
 }
@@ -32,7 +32,7 @@ pub struct GameStats {
     pub score: u32,
     pub stopwatch: Stopwatch,
     pub roid_timer: Timer,
-    pub roid_chance: i8,
+    pub roid_chance: i32,
 }
 
 impl Default for GameStats {
@@ -84,9 +84,7 @@ pub fn setup_scene(mut cmds: Commands, assets: Res<GameAssets>) {
         CircleCollider { radius: 50.0 },
     ));
 
-    // Spawns the text 
-    // Taken from Bevy examples
-    // What I learned from this: Nodes are the base UI components. 
+    // Spawns the text
     cmds.spawn((
         Text::default(),
         Node {
@@ -95,11 +93,16 @@ pub fn setup_scene(mut cmds: Commands, assets: Res<GameAssets>) {
             left: px(12),
             ..default()
         },
-        GameCleanup
+        GameCleanup,
     ));
 }
 
-pub fn game_tick(time: Res<Time>, mut cmds: Commands, mut game_stats: ResMut<GameStats>) {
+pub fn game_tick(
+    time: Res<Time>,
+    mut cmds: Commands,
+    mut game_stats: ResMut<GameStats>,
+    mut text: Single<&mut Text>,
+) {
     game_stats.roid_timer.tick(time.delta());
     game_stats.stopwatch.tick(time.delta());
 
@@ -108,11 +111,13 @@ pub fn game_tick(time: Res<Time>, mut cmds: Commands, mut game_stats: ResMut<Gam
     if game_stats.roid_timer.just_finished() {
         let val = rand.random_range(0..100);
 
-        if val < game_stats.roid_chance {
+        let hard_chance = game_stats.roid_chance * ((game_stats.stopwatch.elapsed_secs()/10.0) as i32).max(1);
+
+        if val <= hard_chance {
             //Generate random position and velocity
             let pos = Vec2::new(
-                rand.random_range(-550.0..55.0),
-                rand.random_range(-550.0..55.0),
+                rand.random_range(-55.0..55.0),
+                rand.random_range(-55.0..55.0),
             );
             let rotation = rand.random_range(-PI..PI);
             let speed = rand.random_range(-200.0..200.0);
@@ -120,6 +125,9 @@ pub fn game_tick(time: Res<Time>, mut cmds: Commands, mut game_stats: ResMut<Gam
             cmds.run_system_cached_with(spawn_asteroid, (pos, rotation, speed, angvel));
         }
     }
+
+    // Displays Score while in game
+    text.0 = format!("Score: {}", game_stats.score);
 }
 
 pub fn control_ship(
@@ -215,7 +223,6 @@ pub fn handle_collisions(
 
         if destroyed_roid {
             game_stats.score += 10;
-            info!("Score: {}", game_stats.score);
             continue;
         }
 
@@ -243,7 +250,6 @@ pub fn spawn_laser_shot(
     mut cmds: Commands,
     game_assets: Res<GameAssets>,
 ) {
-
     //Set pos and rot
     let mut tsf = Transform::from_xyz(loc.x, loc.y, 0.0);
     tsf.rotate_z(forward);
@@ -301,13 +307,4 @@ pub fn spawn_asteroid(
         CircleCollider { radius: 50.0 },
         tsf,
     ));
-}
-
-// Displays Score while in game
-// Should get moved to game_tick, but I'm leaving it seperate for now
-pub fn texter (
-    mut text: Single<&mut Text>,
-    game_stats: Res<GameStats>
-) {
-    text.0 = format!("Score: {}", game_stats.score);
 }
